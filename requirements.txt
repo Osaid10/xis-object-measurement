@@ -1,0 +1,33 @@
+# ============================================================
+# XIS AI/CV Assessment — Python dependencies
+# Tested on Python 3.12. For GPU training (Colab), torch/torchvision
+# are provided by the runtime; see docs/SETUP.md for the CUDA note.
+# ============================================================
+
+# --- Core CV & numerics ---
+opencv-python==4.10.0.84
+numpy==1.26.4
+scipy==1.13.1
+Pillow==10.4.0
+
+# --- Deep learning (Mask R-CNN via torchvision) ---
+torch==2.3.1
+torchvision==0.18.1
+
+# --- COCO dataset format (labels I/O + mAP eval) ---
+pycocotools==2.0.7
+
+# --- Data augmentation ---
+albumentations==1.4.10
+
+# --- Metrics, plotting, tables ---
+matplotlib==3.9.0
+pandas==2.2.2
+scikit-learn==1.5.0
+tqdm==4.66.4
+
+# --- Notebook / reports ---
+jupyter==1.0.0
+
+# NOTE: Segment Anything (auto-labelling) is installed separately from
+# GitHub to keep code-only clones light — see docs/SETUP.md.
