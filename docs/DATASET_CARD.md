@@ -46,12 +46,12 @@
 ## 4. Statistics
 Seeded split (`--seed 42`) via [`dataset/split_dataset.py`](../dataset/split_dataset.py).
 
-| Split | Images |
-|-------|--------|
-| Train (70%) | _filled after split_ |
-| Val (20%)   | _filled after split_ |
-| Test (10%)  | _filled after split_ |
-| **Total**   | 79 |
+| Split | Images | Instances |
+|-------|--------|-----------|
+| Train (70%) | 55 | 55 |
+| Val (20%)   | 16 | 16 |
+| Test (10%)  | 8  | 8  |
+| **Total**   | 79 | 79 |
 
 - **Classes:** 1 (`phone_cover`) + background. **Class balance:** single-class,
   one instance per image (balanced by construction).
