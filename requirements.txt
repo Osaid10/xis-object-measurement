@@ -17,8 +17,8 @@ torchvision==0.18.1
 # --- COCO dataset format (labels I/O + mAP eval) ---
 pycocotools==2.0.7
 
-# --- Data augmentation ---
-albumentations==1.4.10
+# (Data augmentation — horizontal flip + brightness jitter — is implemented
+#  directly in models/train.py with NumPy, so no extra dependency is needed.)
 
 # --- Metrics, plotting, tables ---
 matplotlib==3.9.0
