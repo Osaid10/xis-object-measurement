@@ -65,7 +65,9 @@ def main() -> None:
     ap.add_argument("--no-undistort", dest="undistort", action="store_false")
     args = ap.parse_args()
 
-    K, dist, _ = load_calibration(args.calib)
+    K = dist = None
+    if args.undistort:
+        K, dist, _ = load_calibration(args.calib)
     model = load_model(args.weights, num_classes=2, device=args.device)
 
     inp = Path(args.input)

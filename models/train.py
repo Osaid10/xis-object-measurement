@@ -156,6 +156,9 @@ def main() -> None:
     ap.add_argument("--batch-size", type=int, default=2)
     ap.add_argument("--lr", type=float, default=0.005)
     ap.add_argument("--num-classes", type=int, default=2)   # bg + object
+    ap.add_argument("--pretrained", action="store_true", default=True,
+                    help="start from COCO-pretrained weights (default)")
+    ap.add_argument("--no-pretrained", dest="pretrained", action="store_false")
     ap.add_argument("--out", default="models/weights", type=Path)
     ap.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     ap.add_argument("--seed", type=int, default=42)
@@ -174,7 +177,7 @@ def main() -> None:
                             collate_fn=collate)
     print(f"train={len(train_ds)}  val={len(val_ds)}  device={device}")
 
-    model = build_model(args.num_classes, pretrained=True).to(device)
+    model = build_model(args.num_classes, pretrained=args.pretrained).to(device)
     params = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.SGD(params, lr=args.lr, momentum=0.9, weight_decay=5e-4)
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=8, gamma=0.1)
@@ -182,6 +185,8 @@ def main() -> None:
     args.out.mkdir(parents=True, exist_ok=True)
     fig_dir = Path("docs/figures"); fig_dir.mkdir(parents=True, exist_ok=True)
     log_path = Path("models/training_log.csv")
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+    metrics_path = Path("models/metrics.json")
     history, best_map = [], -1.0
 
     for epoch in range(1, args.epochs + 1):
@@ -215,7 +220,7 @@ def main() -> None:
     with open(log_path, "w", newline="") as f:
         w = csv.DictWriter(f, fieldnames=list(history[0].keys()))
         w.writeheader(); w.writerows(history)
-    with open("models/metrics.json", "w") as f:
+    with open(metrics_path, "w") as f:
         json.dump({"best_mAP_0.5": best_map, "final": history[-1],
                    "config": vars(args) | {"out": str(args.out),
                                            "data_root": str(args.data_root)}},
