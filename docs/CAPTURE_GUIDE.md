@@ -9,6 +9,13 @@ Follow this exactly. The whole pipeline depends on these photos being consistent
 - **Lock focus + exposure:** tap and hold on the subject until **AE/AF LOCK** appears.
   This stops the phone from silently re-focusing between shots.
 - **Flash off.** Use bright, even room light. Avoid harsh shadows and glare.
+- **Keep ONE orientation** (hold the phone landscape) for *all* photos — checkerboard
+  and cover — so every image is the same pixel size.
+- **Transfer at FULL resolution.** Do **not** send via WhatsApp "Photo" — it downscales
+  and resizes images inconsistently, which invalidates the calibration (the object photos
+  must be the exact same resolution as the calibration photos). Use a **USB cable**
+  (File Explorer → *Apple iPhone → Internal Storage → DCIM*), **Google Drive/Photos** at
+  *Original quality*, or WhatsApp **"Document"** mode (sends the original file).
 
 ---
 
