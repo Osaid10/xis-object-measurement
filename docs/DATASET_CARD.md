@@ -32,16 +32,25 @@
 ## 3. Labelling
 | Property | Detail |
 |----------|--------|
-| **Method** | Automatic instance-mask labelling via **classical CV** (no YOLO, no Roboflow) — [`dataset/grabcut_label.py`](../dataset/grabcut_label.py) |
-| **How** | The cover is located as the largest **dark** blob (grey background and white card excluded by brightness), then its exact silhouette is refined with **GrabCut** (rectangle-initialised). Card and background are excluded by construction. |
-| **QA** | A labelled overlay is written for every image (`dataset/exports/overlays/`) and reviewed; masks confirmed to trace the cover silhouette. |
+| **Method** | Automatic instance-mask labelling with **MobileSAM** (promptable Segment Anything) — [`dataset/sam_label.py`](../dataset/sam_label.py). SAM is used only for *labelling*; it is **not** the trained segmentation model, so it does not fall under the YOLO/Roboflow restriction. |
+| **How** | The cover is located as the largest **interior dark** blob; its bounding box, plus a negative point on the bright reference card, prompts SAM. The largest card-free mask in the plausible size range is kept as the cover silhouette. |
+| **QA** | An overlay is written for every image (`dataset/exports/overlays/`); label aspect ratios were checked against the object's true 2.03 — **mean 1.99, median 2.02**, with 75/79 in the 1.7–2.4 band. |
 | **Export** | COCO instance-segmentation JSON (`dataset/exports/annotations.json`). |
 
-> Approach history (documented for transparency): a first attempt on a cluttered
-> wood table failed — the wood's orange hue and background clutter defeated
-> colour/brightness cues. Re-shooting on a plain grey background made the
-> dark-object + GrabCut method reliable. This is a real illustration of how data
-> collection conditions drive segmentation robustness.
+> **Approach history (documented for transparency)** — three iterations, each
+> fixing a real, measured failure:
+> 1. A cluttered **wood** table defeated colour/brightness cues (the wood's orange
+>    hue collided with the cover's copper accents; desk clutter added distractors).
+> 2. Re-shooting on a plain **grey towel** fixed localization, but a classical
+>    **GrabCut** labeller over-expanded into the towel/card on **62/79** images
+>    (mask aspect collapsed toward 1.0). A first model faithfully learned these
+>    bad masks — measurement then failed on the short side (~77 % error).
+> 3. A **box-prompted MobileSAM** labeller produced clean cover masks
+>    (**75/79** with aspect 1.7–2.4), which the final model learned correctly.
+>
+> This is concrete evidence that **labelling quality — not just model choice —
+> drives measurement accuracy**, and that the pipeline was validated end-to-end
+> rather than trusted on proxy metrics.
 
 ## 4. Statistics
 Seeded split (`--seed 42`) via [`dataset/split_dataset.py`](../dataset/split_dataset.py).

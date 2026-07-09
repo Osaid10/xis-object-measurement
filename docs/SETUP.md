@@ -31,10 +31,13 @@ pip install -r requirements.txt
 > <https://pytorch.org/get-started/locally/>. On Colab, torch/torchvision are
 > pre-installed — only `pycocotools` and `opencv-python-headless` are added.
 
-> **Optional — SAM auto-labelling:** the default labeller is classical CV (no
-> download). To use Segment Anything instead:
-> `pip install git+https://github.com/facebookresearch/segment-anything.git`
-> and download a checkpoint (see the model card).
+> **Auto-labelling with MobileSAM** (`dataset/sam_label.py`, used only to create
+> training labels — not the trained model):
+> ```
+> pip install timm git+https://github.com/ChaoningZhang/MobileSAM.git
+> ```
+> Checkpoint `models/weights/mobile_sam.pt` (~37 MB) is on Drive (README) or via
+> `huggingface_hub.hf_hub_download("dhkim2810/MobileSAM", "mobile_sam.pt")`.
 
 ## 3. Data layout
 Large files live on Google Drive (Section 2.2). Download them from the links in
@@ -51,7 +54,7 @@ models/weights/         <- maskrcnn_best.pth (or train it yourself)
 |------|---------|--------|
 | 1. Calibrate | `python calibration/calibrate.py --images calibration/images --save-detections` | `calibration/calibration.json` (K, dist, reprojection error) |
 | 2. Undistort | `python calibration/camera_utils.py --input dataset/raw --output dataset/undistorted` | undistorted images |
-| 3. Auto-label | `python dataset/auto_label.py --images dataset/undistorted --category phone_cover` | `dataset/exports/annotations.json` + QA overlays |
+| 3. Auto-label | `python dataset/sam_label.py --images dataset/undistorted --category phone_cover` | `dataset/exports/annotations.json` + QA overlays |
 | 4. Split | `python dataset/split_dataset.py --images dataset/undistorted` | `dataset/{train,val,test}` + split JSONs |
 | 5. Train | `python models/train.py --data-root dataset --epochs 25` *(or the Colab notebook)* | `models/weights/maskrcnn_best.pth`, `docs/figures/loss_curves.png`, `models/metrics.json` |
 | 6. Infer | `python inference/infer.py --input dataset/test --weights models/weights/maskrcnn_best.pth` | annotated masks in `inference/demo_outputs/` |
