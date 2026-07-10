@@ -83,15 +83,19 @@ python measurement/validate_accuracy.py --images measurement/eval_images \
 ```
 
 ## 📦 Large files (Google Drive — per Section 2.2)
-Large files are **not** stored in this repo. All are on Google Drive with
-"Anyone with the link can view":
+Large files are **not** stored in this repo. They live in one shared Google Drive
+folder (set to *"Anyone with the link can view"*):
 
-| Contents | Link |
-|----------|------|
-| Calibration images (28, HEIC + JPEG) | _add shareable link_ |
-| Full raw dataset (79 cover images) | _add shareable link_ |
-| Labelled dataset export (COCO + overlays) | _add shareable link_ |
-| Trained model weights (`maskrcnn_best.pth`, 176 MB) | _add shareable link_ |
+### 🔗 [**All large files — Google Drive folder**](https://drive.google.com/drive/folders/1BjH1mND9RcV-c0NAag2NpI9cznIt103E?usp=drive_link)
+
+That folder contains:
+
+| Contents | Details |
+|----------|---------|
+| **Calibration images** | 28 checkerboard photos (HEIC + JPEG) |
+| **Dataset** | 79 phone-cover photos (raw + undistorted + train/val/test splits) |
+| **Labelled export** | COCO `annotations.json` + QA overlays |
+| **Trained model weights** | `maskrcnn_best.pth` (168 MB) |
 
 ## Documentation
 - [SETUP.md](docs/SETUP.md) — installation, environment, run instructions
