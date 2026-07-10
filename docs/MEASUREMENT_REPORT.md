@@ -15,7 +15,9 @@ dimensions `L = 85.60 mm`, `S = 53.98 mm`. It is detected as the foreground blob
 whose min-area-rectangle aspect ratio matches `L/S ≈ 1.585` with high
 rectangularity. From its pixel side lengths `long_px`, `short_px`:
 
-$$\text{pixels\_per\_mm} = \frac{1}{2}\left(\frac{\text{long\_px}}{85.60} + \frac{\text{short\_px}}{53.98}\right)$$
+```text
+pixels_per_mm = ( long_px / 85.60  +  short_px / 53.98 ) / 2
+```
 
 Averaging both sides reduces the effect of small detection noise and mild
 perspective.
@@ -23,8 +25,10 @@ perspective.
 **Step 3 — Object dimensions.** Fit a min-area rectangle to the object mask
 (from the trained Mask R-CNN). With rectangle sides `w_px`, `h_px`:
 
-$$\text{width\_mm} = \frac{\min(w_{px}, h_{px})}{\text{pixels\_per\_mm}}, \qquad
-\text{height\_mm} = \frac{\max(w_{px}, h_{px})}{\text{pixels\_per\_mm}}$$
+```text
+width_mm  = min(w_px, h_px) / pixels_per_mm
+height_mm = max(w_px, h_px) / pixels_per_mm
+```
 
 The min-area rectangle makes the measurement invariant to in-plane rotation.
 
