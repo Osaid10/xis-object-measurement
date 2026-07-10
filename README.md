@@ -88,10 +88,10 @@ Large files are **not** stored in this repo. All are on Google Drive with
 
 | Contents | Link |
 |----------|------|
-| Calibration images (25) | _TBD — add shareable link_ |
-| Full raw dataset (70+ images) | _TBD — add shareable link_ |
-| Labelled dataset export (COCO) | _TBD — add shareable link_ |
-| Trained model weights (`maskrcnn_best.pth`) | _TBD — add shareable link_ |
+| Calibration images (28, HEIC + JPEG) | _add shareable link_ |
+| Full raw dataset (79 cover images) | _add shareable link_ |
+| Labelled dataset export (COCO + overlays) | _add shareable link_ |
+| Trained model weights (`maskrcnn_best.pth`, 176 MB) | _add shareable link_ |
 
 ## Documentation
 - [SETUP.md](docs/SETUP.md) — installation, environment, run instructions
