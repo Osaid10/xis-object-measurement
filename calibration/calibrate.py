@@ -61,6 +61,11 @@ def main() -> None:
     ap.add_argument("--output", default="calibration/calibration.json", type=Path)
     ap.add_argument("--save-detections", action="store_true",
                     help="save corner-overlay images to calibration/detected/")
+    ap.add_argument("--drop-worst", type=int, default=0,
+                    help="re-calibrate after removing the N highest-error frames")
+    ap.add_argument("--fix-k3", action="store_true",
+                    help="constrain k3=0 for a stable, physically gentle distortion fit "
+                         "(recommended for phone cameras / screen-based calibration)")
     args = ap.parse_args()
 
     pattern = (args.cols, args.rows)
@@ -104,19 +109,34 @@ def main() -> None:
         sys.exit(f"Only {n} usable images — need >= 10 (spec: 20+). "
                  f"Check that --cols/--rows match the board's inner corners.")
 
-    rms, K, dist, rvecs, tvecs = cv2.calibrateCamera(
-        objpoints, imgpoints, image_size, None, None
-    )
+    calib_flags = cv2.CALIB_FIX_K3 if args.fix_k3 else 0
 
-    # Per-image reprojection error (RMSE over the board's corners).
-    per_image, total_sq_err, total_pts = [], 0.0, 0
-    for i in range(n):
-        proj, _ = cv2.projectPoints(objpoints[i], rvecs[i], tvecs[i], K, dist)
-        err = cv2.norm(imgpoints[i], proj, cv2.NORM_L2)
-        per_image.append({"image": used[i], "rmse_px": float(err / len(proj))})
-        total_sq_err += err ** 2
-        total_pts += len(proj)
-    mean_reproj = float(np.sqrt(total_sq_err / total_pts))
+    def calibrate_set(objp_l, imgp_l, used_l):
+        """Calibrate on one set of views; return rms, K, dist, per-image error, RMS."""
+        rms, K, dist, rvecs, tvecs = cv2.calibrateCamera(
+            objp_l, imgp_l, image_size, None, None, flags=calib_flags)
+        per_image, tse, tp = [], 0.0, 0
+        for i in range(len(objp_l)):
+            proj, _ = cv2.projectPoints(objp_l[i], rvecs[i], tvecs[i], K, dist)
+            e = cv2.norm(imgp_l[i], proj, cv2.NORM_L2)
+            per_image.append({"image": used_l[i], "rmse_px": float(e / np.sqrt(len(proj)))})
+            tse += e ** 2
+            tp += len(proj)
+        return rms, K, dist, per_image, float(np.sqrt(tse / tp))
+
+    rms, K, dist, per_image, mean_reproj = calibrate_set(objpoints, imgpoints, used)
+
+    dropped_names = []
+    if args.drop_worst > 0 and (n - args.drop_worst) >= 10:
+        order = sorted(range(n), key=lambda i: per_image[i]["rmse_px"], reverse=True)
+        drop = set(order[:args.drop_worst])
+        dropped_names = [used[i] for i in drop]
+        objpoints = [o for i, o in enumerate(objpoints) if i not in drop]
+        imgpoints = [o for i, o in enumerate(imgpoints) if i not in drop]
+        used = [o for i, o in enumerate(used) if i not in drop]
+        n = len(used)
+        rms, K, dist, per_image, mean_reproj = calibrate_set(objpoints, imgpoints, used)
+        print(f"Dropped {len(drop)} worst frame(s): {', '.join(dropped_names)}")
 
     result = {
         "image_size": list(image_size),
@@ -124,6 +144,8 @@ def main() -> None:
         "square_size_mm": args.square_size,
         "num_images_total": len(images),
         "num_images_used": n,
+        "num_images_dropped": len(dropped_names),
+        "dropped_frames": dropped_names,
         "rms_reprojection_error_px": float(rms),
         "mean_reprojection_error_px": mean_reproj,
         "camera_matrix": K.tolist(),

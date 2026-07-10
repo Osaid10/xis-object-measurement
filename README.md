@@ -52,7 +52,7 @@ for scale.
 | Path | Contents |
 |------|----------|
 | `calibration/` | `calibrate.py`, `camera_utils.py`, checkerboard target, (images on Drive) |
-| `dataset/`     | `auto_label.py`, `split_dataset.py`, train/val/test (images on Drive) |
+| `dataset/`     | `sam_label.py` (MobileSAM labeller), `split_dataset.py`, train/val/test (images on Drive) |
 | `models/`      | `train.py`, Colab notebook, configs (weights on Drive) |
 | `inference/`   | `model.py` (Mask R-CNN), `infer.py`, demo outputs |
 | `measurement/` | `measure.py`, `validate_accuracy.py`, accuracy report |
@@ -68,8 +68,8 @@ pip install -r requirements.txt
 python calibration/calibrate.py --images calibration/images --save-detections
 # 2. Undistort object images
 python calibration/camera_utils.py --input dataset/raw --output dataset/undistorted
-# 3. Auto-label + split
-python dataset/auto_label.py --images dataset/undistorted --category phone_cover
+# 3. Auto-label (MobileSAM, box-prompted) + split
+python dataset/sam_label.py --images dataset/undistorted --category phone_cover
 python dataset/split_dataset.py --images dataset/undistorted
 # 4. Train (Colab GPU recommended — models/Train_MaskRCNN_Colab.ipynb)
 python models/train.py --data-root dataset --epochs 25
@@ -106,7 +106,7 @@ Large files are **not** stored in this repo. All are on Google Drive with
 |--------|--------------|----------------|
 | `calibration/calibrate.py` | CLI | checkerboard images → `calibration.json` (K, dist, error) |
 | `calibration/camera_utils.py` | `undistort(img, K, dist)` | BGR image → undistorted BGR image |
-| `dataset/auto_label.py` | CLI | object images → COCO annotations + QA overlays |
+| `dataset/sam_label.py` | CLI | object images → MobileSAM masks → COCO annotations + QA overlays |
 | `inference/model.py` | `predict(model, img)` | BGR image → `[{box, score, mask}]` |
 | `measurement/measure.py` | `run(image, ...)` | image → `{width_mm, height_mm, confidence}` + annotated image |
 | `measurement/validate_accuracy.py` | CLI | images + GT → MAE / MPE table |
@@ -116,8 +116,10 @@ Large files are **not** stored in this repo. All are on Google Drive with
   segmenter that transfer-learns well on a small custom set and yields precise masks.
 - **Flat, thin object + coplanar reference card**: keeps the object surface level
   with the card so a single pixels-per-mm scale is valid (see MEASUREMENT_REPORT).
-- **Classical CV auto-labelling**: the high-contrast object on a plain background is
-  segmentable without a model, giving fast, consistent ground-truth masks.
+- **MobileSAM box-prompted auto-labelling**: classical thresholding could not
+  cleanly separate the black cover from a grey towel with dark pile shadows, so a
+  promptable segmenter (SAM) is used to generate clean training masks — a decision
+  validated by measured label quality (see DATASET_CARD).
 
 ## Assumptions & limitations (summary)
 - The object and reference card are approximately **coplanar** and viewed

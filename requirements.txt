@@ -8,7 +8,8 @@
 opencv-python==4.10.0.84
 numpy==1.26.4
 scipy==1.13.1
-Pillow==10.4.0
+Pillow>=10.4.0
+pillow-heif>=1.0.0        # decode iPhone HEIC originals (tools/heic_to_jpg.py)
 
 # --- Deep learning (Mask R-CNN via torchvision) ---
 torch==2.3.1
@@ -29,5 +30,8 @@ tqdm==4.66.4
 # --- Notebook / reports ---
 jupyter==1.0.0
 
-# NOTE: Segment Anything (auto-labelling) is installed separately from
-# GitHub to keep code-only clones light — see docs/SETUP.md.
+# NOTE: MobileSAM (used ONLY for auto-labelling in dataset/sam_label.py — not the
+# trained model) is installed separately to keep code-only clones light:
+#     pip install timm git+https://github.com/ChaoningZhang/MobileSAM.git
+# Checkpoint mobile_sam.pt (~37 MB) is hosted on Drive (see README) or fetched via
+# huggingface_hub from "dhkim2810/MobileSAM". See docs/SETUP.md.

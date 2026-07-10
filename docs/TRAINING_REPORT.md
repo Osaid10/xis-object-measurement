@@ -19,7 +19,7 @@ COCO-pretrained, with the box and mask heads replaced for **2 classes**
 | Split | 70% train / 20% val / 10% test (seeded) |
 | Optimizer | SGD, momentum 0.9, weight decay 5e-4 |
 | Learning rate | 0.005, StepLR (step 8, γ 0.1) |
-| Epochs | 25 |
+| Epochs | 20 |
 | Batch size | 2 |
 | Augmentation | random horizontal flip, brightness jitter (0.8–1.2×) |
 | Input | full-resolution undistorted images |
@@ -32,26 +32,33 @@ python models/train.py --data-root dataset --epochs 25 --batch-size 2 --lr 0.005
 ```
 
 ## 3. Metrics
-> Filled from `models/metrics.json` after training. Segmentation (mask) metrics.
+From `models/metrics.json` (validation set, 16 images). Segmentation (mask) metrics.
 
 | Metric | Value |
 |--------|-------|
-| mAP@0.5 | _TBD_ |
-| mAP@0.5:0.95 | _TBD_ |
-| Mean mask IoU | _TBD_ |
-| Precision | _TBD_ |
-| Recall | _TBD_ |
-| F1 | _TBD_ |
+| mAP@0.5 | **0.871** |
+| mAP@0.5:0.95 | **0.840** |
+| Mean mask IoU | **0.840** |
+| Precision | 0.875 |
+| Recall | 0.875 |
+| F1 | 0.875 |
 
-- **Loss curves (train/val):** `docs/figures/loss_curves.png` _(TBD)_
-- **Per-epoch log:** `models/training_log.csv`
-- **Metric definitions:** mAP via COCO evaluation (`pycocotools`); IoU/precision/
-  recall/F1 computed on the mask at score ≥ 0.5, IoU ≥ 0.5.
+- **Loss curves (train/val):** ![loss curves](figures/loss_curves.png)
+- **Per-epoch log:** `models/training_log.csv` (train/val loss + metrics per epoch)
+- **Metric definitions:** mAP via COCO evaluation (`pycocotools`, segmentation);
+  IoU/precision/recall/F1 computed on the mask at score ≥ 0.5, IoU ≥ 0.5.
+- **Convergence:** train loss 1.17 → 0.11; validation mAP@0.5 climbs from 0.48
+  (epoch 1) and plateaus at 0.87 by ~epoch 12. These are **genuine** cover-
+  segmentation metrics — an earlier model trained on over-loose auto-labels showed
+  an inflated mAP@0.5 = 1.0 that did **not** translate to accurate measurement,
+  which is exactly why the labelling was rebuilt with SAM (see DATASET_CARD).
 
 ## 4. Qualitative results
-Predictions on the held-out **test** split (mask overlay + confidence) are saved
-to `inference/demo_outputs/` and shown in `docs/figures/test_predictions/`
-_(TBD)_. Generate with:
+Predictions on the held-out **test** split (mask overlay + confidence):
+
+![test predictions](figures/test_predictions.jpg)
+
+Full outputs are in `inference/demo_outputs/`. Generate with:
 ```bash
 python inference/infer.py --input dataset/test \
     --weights models/weights/maskrcnn_best.pth

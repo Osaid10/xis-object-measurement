@@ -67,29 +67,72 @@ def _rect_metrics(contour):
 
 
 # ----------------------------- reference card ------------------------------- #
-def detect_reference_card(img: np.ndarray, card_long=CARD_LONG_MM,
-                          card_short=CARD_SHORT_MM, min_frac=0.004, max_frac=0.6):
-    """Find the reference card and derive pixels_per_mm. Returns dict or None."""
+def _card_box(img, min_frac=0.008):
+    """Bounding box of the brightest large foreground blob (the white card)."""
     mask = _foreground_mask(img)
+    gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    img_area = img.shape[0] * img.shape[1]
-    target_aspect = card_long / card_short
-    best, best_score = None, 1e9
+    A = img.shape[0] * img.shape[1]
+    best, best_bright = None, -1.0
     for c in contours:
-        m = _rect_metrics(c)
-        if m is None:
+        if cv2.contourArea(c) < min_frac * A:
             continue
-        frac = m["area"] / img_area
-        if not (min_frac <= frac <= max_frac) or m["fill"] < 0.85:
-            continue
-        score = abs(m["aspect"] - target_aspect)
-        if score < best_score:
-            best_score, best = score, m
-    if best is None or best_score > 0.30:      # reject if nothing card-shaped
+        m = np.zeros(gray.shape, np.uint8)
+        cv2.drawContours(m, [c], -1, 255, -1)
+        bright = cv2.mean(gray, mask=m)[0]
+        if bright > best_bright:
+            best_bright, best = bright, c
+    return cv2.boundingRect(best) if best is not None else None
+
+
+def _grabcut(img, box, pad=15, iters=5):
+    """Rectangle-initialised GrabCut -> largest refined foreground contour."""
+    H, W = img.shape[:2]
+    x, y, w, h = box
+    x, y = max(0, x - pad), max(0, y - pad)
+    w, h = min(W - x, w + 2 * pad), min(H - y, h + 2 * pad)
+    mx, my = max(2, W // 100), max(2, H // 100)
+    x, y = max(mx, x), max(my, y)
+    w, h = min(w, W - x - mx), min(h, H - y - my)
+    if w < 10 or h < 10:
         return None
-    ppm = (best["long_px"] / card_long + best["short_px"] / card_short) / 2.0
-    return {"pixels_per_mm": float(ppm), "box": best["box"],
-            "long_px": best["long_px"], "short_px": best["short_px"]}
+    mask = np.zeros((H, W), np.uint8)
+    bgd, fgd = np.zeros((1, 65), np.float64), np.zeros((1, 65), np.float64)
+    try:
+        cv2.grabCut(img, mask, (x, y, w, h), bgd, fgd, iters, cv2.GC_INIT_WITH_RECT)
+    except cv2.error:
+        return None
+    m = np.where((mask == 2) | (mask == 0), 0, 1).astype(np.uint8)
+    m = cv2.morphologyEx(m, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
+    cnts, _ = cv2.findContours(m, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    return max(cnts, key=cv2.contourArea) if cnts else None
+
+
+def detect_reference_card(img: np.ndarray, card_long=CARD_LONG_MM,
+                          card_short=CARD_SHORT_MM, work_size=1200):
+    """Detect the card with GrabCut and derive pixels_per_mm. Returns dict or None.
+
+    The card is the brightest large object; GrabCut extracts a clean silhouette
+    whose min-area rectangle gives an accurate pixel size (robust to background
+    texture, unlike raw thresholding).
+    """
+    H, W = img.shape[:2]
+    scale = work_size / max(H, W) if max(H, W) > work_size else 1.0
+    small = cv2.resize(img, (round(W * scale), round(H * scale))) if scale < 1.0 else img
+    box = _card_box(small)
+    if box is None:
+        return None
+    contour = _grabcut(small, box)
+    if contour is None:
+        return None
+    (cw, ch) = cv2.minAreaRect(contour)[1]
+    long_px, short_px = max(cw, ch) / scale, min(cw, ch) / scale
+    if short_px < 1:
+        return None
+    ppm = (long_px / card_long + short_px / card_short) / 2.0
+    box_pts = (cv2.boxPoints(cv2.minAreaRect(contour)) / scale).astype(int)
+    return {"pixels_per_mm": float(ppm), "box": box_pts,
+            "long_px": long_px, "short_px": short_px}
 
 
 # ------------------------------ object dims --------------------------------- #

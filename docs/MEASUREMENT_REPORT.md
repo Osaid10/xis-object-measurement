@@ -45,14 +45,23 @@ the frame — most at the edges. Consequences for measurement on a **raw** image
   object elsewhere in the frame introduces a position-dependent error.
 
 Undistortion restores a consistent, rectilinear projection so a single
-`pixels_per_mm` is valid across the image. This is demonstrated empirically:
+`pixels_per_mm` is valid across the image. **Empirically on this dataset
+(24 images):**
 
-| Image | Method | Width (mm) | Height (mm) | Error vs GT |
-|-------|--------|-----------|-------------|-------------|
-| sample | **undistorted** | _TBD_ | _TBD_ | _TBD_ |
-| sample | raw (`--no-undistort`) | _TBD_ | _TBD_ | _TBD_ (larger) |
+| Pipeline | Overall MAE | Overall MPE |
+|----------|-------------|-------------|
+| With undistortion (default) | 3.89 mm | 3.31 % |
+| Raw (`--no-undistort`) | 3.68 mm | 3.14 % |
 
-Reproduce the raw (incorrect) case with `--no-undistort`.
+The two are within noise (~0.2 mm), and the honest reason is important: the
+**iPhone 12 Pro Max main lens has very low native distortion** (k1 = 0.10,
+k2 = −0.28; see the Calibration Report), so `cv2.undistort` is nearly an identity
+transform here and its measured effect is small. **Undistortion is still applied
+by default and still matters in general** — on wide-angle / action / fisheye
+cameras k1 is several times larger, and the same raw measurement would be badly
+wrong, worst at the frame edges where distortion displaces pixels most. Knowing
+*when* the correction is significant is part of understanding the geometry, not a
+reason to skip it. Reproduce the raw case with `--no-undistort`.
 
 ## 4. Reference object justification
 The ID-1 card is chosen because it is **precisely standardised** (85.60 ×
@@ -73,15 +82,21 @@ python measurement/validate_accuracy.py --images measurement/eval_images \
     --gt-width <W_mm> --gt-height <H_mm>
 ```
 
-> Filled from `measurement/accuracy_results.csv`.
+Ground truth: **width 79 mm, height 160 mm** (calliper). Evaluated on **24
+held-out images** (val + test, never used to train the model), full pipeline
+(raw → undistort → card → model mask → measure). From `measurement/accuracy_results.csv`:
 
 | Dimension | MAE (mm) | MPE (%) |
 |-----------|----------|---------|
-| Short side | _TBD_ | _TBD_ |
-| Long side | _TBD_ | _TBD_ |
-| **Overall** | _TBD_ | _TBD_ |
+| Short side (79 mm) | 2.76 | 3.50 |
+| Long side (160 mm) | 5.01 | 3.13 |
+| **Overall** | **3.89** | **3.31** |
 
-Per-image error table: `measurement/accuracy_results.csv` _(TBD)_.
+**~3.3 % mean error / ~3.9 mm MAE** measuring a 160 × 79 mm object from a single
+phone photo — good accuracy for a monocular reference-scaled system. Per-image
+table: `measurement/accuracy_results.csv`.
+
+![measurement demo](figures/measurement_demo.jpg)
 
 ## 6. Error sources & limitations
 - **Coplanarity / thickness.** The pixel scale is set at the card's plane. An
@@ -103,8 +118,8 @@ A single new image → mask overlay + width (mm) + height (mm) + confidence:
 python measurement/measure.py --image NEW.jpg --method model \
     --weights models/weights/maskrcnn_best.pth --out result.jpg
 ```
-Output JSON example:
+Output JSON example (held-out image IMG_0334; ground truth 79 × 160 mm):
 ```json
-{ "width_mm": _TBD_, "height_mm": _TBD_, "confidence": _TBD_,
-  "pixels_per_mm": _TBD_, "undistorted": true, "method": "model" }
+{ "width_mm": 73.59, "height_mm": 154.17, "confidence": 0.999,
+  "pixels_per_mm": 9.2962, "undistorted": true, "method": "model" }
 ```
