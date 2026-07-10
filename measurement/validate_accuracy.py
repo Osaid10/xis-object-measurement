@@ -48,6 +48,8 @@ def main() -> None:
     ap.add_argument("--gt-height", type=float, help="constant GT height (mm)")
     ap.add_argument("--gt-csv", help="per-image GT csv (image,gt_width_mm,gt_height_mm)")
     ap.add_argument("--device", default="cpu")
+    ap.add_argument("--no-undistort", dest="undistort", action="store_false",
+                    help="skip undistortion (to demonstrate the calibration dependency)")
     ap.add_argument("--out", default="measurement/accuracy_results.csv")
     args = ap.parse_args()
 
@@ -62,7 +64,7 @@ def main() -> None:
     for p in files:
         try:
             res, _ = run(p, args.calib, args.method, args.weights,
-                         do_undistort=True, device=args.device, model=model)
+                         do_undistort=args.undistort, device=args.device, model=model)
         except SystemExit as e:
             print(f"  [skip] {p.name}: {e}")
             continue
