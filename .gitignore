@@ -32,14 +32,18 @@ models/weights/*
 *.mov
 *.avi
 
-# --- Keep curated small samples, doc figures, demo outputs, folder markers ---
+# --- Keep curated small samples, doc figures, folder markers ---
 !samples/
 !samples/**
 !docs/figures/
 !docs/figures/**
-!inference/demo_outputs/
-!inference/demo_outputs/**
 !**/.gitkeep
+
+# --- Derived large image outputs (regenerated from Drive-hosted data) ---
+dataset/undistorted/*
+calibration/detected/*
+inference/demo_outputs/*
+measurement/eval_images/*
 
 # --- Python ---
 __pycache__/
