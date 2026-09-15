@@ -21,6 +21,36 @@ for scale.
   card, validated against physical calliper measurements (MAE / MPE).
 - **Reproducible**: seeded splits, config-driven training, one-command scripts.
 
+## Measured accuracy
+
+Validated against **physical calliper ground truth**, not held-out labels.
+
+| | MAE | MPE |
+|---|---|---|
+| Short side (79 mm) | 2.76 mm | 3.50 % |
+| Long side (160 mm) | 5.01 mm | 3.13 % |
+| **Overall** | **3.89 mm** | **3.31 %** |
+
+**~3.3 % mean error measuring a 160 × 79 mm phone cover from a single
+photograph**, over **24 images / 48 edge measurements** through the full
+pipeline (raw → undistort → card → Mask R-CNN mask → measure). Reproduce with
+`measurement/validate_accuracy.py`; per-image errors are committed in
+`measurement/accuracy_results.csv`.
+
+Two things worth stating plainly rather than leaving for a reader to find:
+
+- **Undistortion does not improve the number on this dataset** — 3.89 mm with it
+  against 3.68 mm without, a gap inside the ~0.2 mm noise. It is kept on by
+  default anyway, because `pixels_per_mm` derived from the reference card is only
+  locally valid on a distorted frame, so the raw result depends on the object and
+  the card sitting in a similar region of the image. The reasoning is in
+  [MEASUREMENT_REPORT.md](docs/MEASUREMENT_REPORT.md#3-why-undistortion-is-mandatory-calibration-dependency).
+- **This is one object across 24 captures, not 24 different objects.** So the
+  figure measures accuracy and repeatability across viewpoint and lighting for a
+  single target — it is not evidence of generalisation across sizes or shapes.
+
+Full protocol, derivation and limitations: [MEASUREMENT_REPORT.md](docs/MEASUREMENT_REPORT.md).
+
 ## Pipeline architecture
 
 ```
